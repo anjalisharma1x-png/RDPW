@@ -1,0 +1,32 @@
+name: Windows RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Setup RDP
+      run: |
+        net user runneradmin Password@123
+        net localgroup administrators runneradmin /add
+
+    - name: Enable RDP
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+        netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+
+    - name: Download Tailscale
+      run: |
+        Invoke-WebRequest https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe -OutFile tailscale.exe
+        Start-Process tailscale.exe -ArgumentList "/silent" -Wait
+
+    - name: Connect Tailscale
+      run: |
+        tailscale up --authkey=tskey-auth-k9crWrUDNc11CNTRL-rEdVZX4RhwDqbQKw9DCPxDZ6VhhNFK3x
+
+    - name: Show Details
+      run: |
+        ipconfig
